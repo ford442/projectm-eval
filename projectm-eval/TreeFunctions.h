@@ -97,4 +97,11 @@ prjm_eval_function_decl(min);
 prjm_eval_function_decl(max);
 prjm_eval_function_decl(sign);
 prjm_eval_function_decl(rand);
+
+/**
+ * @brief Seeds a rand() stream with Milkdrop's Mersenne Twister initialization.
+ * @param rng The stream to seed.
+ * @param seed The seed.
+ */
+void prjm_eval_rng_seed(prjm_eval_rng_t* rng, uint32_t seed);
 prjm_eval_function_decl(invsqrt);

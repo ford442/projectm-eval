@@ -183,6 +183,10 @@ prjm_eval_compiler_node_t* prjm_eval_compiler_create_expression(prjm_eval_compil
     {
         expr->memory_buffer = cctx->global_memory;
     }
+    else if (strcmp(func->name, "rand") == 0)
+    {
+        expr->rng = &cctx->rng;
+    }
 
     bool args_are_const_evaluable = true;
     bool args_are_state_changing = false;

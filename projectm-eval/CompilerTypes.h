@@ -69,6 +69,16 @@ typedef struct prjm_eval_exptreenode_list_item
  * @brief A single function, variable or constant in the expression tree.
  * The assigned function will determine how to access the other members.
  */
+/**
+ * @brief State of one Mersenne Twister stream, as used by rand().
+ * mti == 0 means "not seeded yet": the first draw seeds it with Milkdrop's default seed.
+ */
+typedef struct prjm_eval_rng
+{
+    uint32_t mt[624]; /*!< The state vector. */
+    int32_t mti; /*!< Index of the next word in mt, 0 if not yet seeded. */
+} prjm_eval_rng_t;
+
 typedef struct prjm_eval_exptreenode
 {
     prjm_eval_expr_func_t* func;
@@ -77,6 +87,7 @@ typedef struct prjm_eval_exptreenode
     {
         PRJM_EVAL_F* var; /*!< Variable reference. */
         projectm_eval_mem_buffer memory_buffer; /*!< megabuf/gmegabuf memory block. */
+        prjm_eval_rng_t* rng; /*!< rand() stream of the owning context. NULL uses the process-wide stream. */
     };
     struct prjm_eval_exptreenode** args; /*!< Function arguments. Last element must be a NULL pointer*/
     prjm_eval_exptreenode_list_item_t* list;  /*!< Next argument in the instruction list. */
@@ -130,6 +141,7 @@ typedef struct projectm_eval_context
     projectm_eval_mem_buffer global_memory; /*!< The global memory buffer, referred to as gmegabuf. */
     prjm_eval_compiler_error_t error; /*!< Holds information about the last compile error. */
     prjm_eval_exptreenode_t* compile_result; /*!< The result of the last compilation. Used temporarily during compilation. */
+    prjm_eval_rng_t rng; /*!< This context's rand() stream. */
 } prjm_eval_compiler_context_t;
 
 typedef struct

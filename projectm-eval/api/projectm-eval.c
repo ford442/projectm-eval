@@ -3,6 +3,7 @@
 #include "projectm-eval/CompilerTypes.h"
 #include "projectm-eval/MemoryBuffer.h"
 #include "projectm-eval/CompileContext.h"
+#include "projectm-eval/TreeFunctions.h"
 #include "projectm-eval/TreeVariables.h"
 
 projectm_eval_mem_buffer projectm_eval_memory_buffer_create()
@@ -39,6 +40,11 @@ void projectm_eval_context_free_memory(struct projectm_eval_context* ctx)
 void projectm_eval_context_reset_variables(struct projectm_eval_context* ctx)
 {
     prjm_eval_reset_context_vars(ctx);
+}
+
+void projectm_eval_context_seed_rand(struct projectm_eval_context* ctx, uint32_t seed)
+{
+    prjm_eval_rng_seed(&ctx->rng, seed);
 }
 
 PRJM_EVAL_F* projectm_eval_context_register_variable(struct projectm_eval_context* ctx, const char* var_name)

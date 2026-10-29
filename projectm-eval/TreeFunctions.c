@@ -153,35 +153,45 @@ void prjm_eval_intrinsic_functions(prjm_eval_intrinsic_function_list_ptr list, u
 }
 
 /* This is Milkdrop's original rand() implementation. */
-static uint32_t prjm_eval_genrand_int32(void)
+void prjm_eval_rng_seed(prjm_eval_rng_t* rng, uint32_t seed)
 {
+    rng->mt[0] = seed & 0xffffffffUL;
+    for (rng->mti = 1; rng->mti < N; rng->mti++)
+    {
+        rng->mt[rng->mti] =
+            (1812433253UL * (rng->mt[rng->mti - 1] ^ (rng->mt[rng->mti - 1] >> 30)) + rng->mti);
+
+        /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
+        /* In the previous versions, MSBs of the seed affect   */
+        /* only MSBs of the array mt[].                        */
+        /* 2002/01/09 modified by Makoto Matsumoto             */
+        rng->mt[rng->mti] &= 0xffffffffUL;
+        /* for >32 bit machines */
+    }
+}
+
+static uint32_t prjm_eval_genrand_int32(prjm_eval_rng_t* rng)
+{
+    /* Process-wide stream for nodes compiled without a context (and the pre-context behavior). */
+    static prjm_eval_rng_t process_rng;
+
     uint32_t y;
-    static uint32_t mag01[2] = { 0x0UL, MATRIX_A };
+    static const uint32_t mag01[2] = { 0x0UL, MATRIX_A };
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
-    static uint32_t mt[N]; /* the array for the state vector  */
-    static int32_t mti; /* mti==N+1 means mt[N] is not initialized */
-
-
-    if (!mti)
+    if (!rng)
     {
-        uint32_t s = 0x4141f00d; // Initial Mersenne Twister seed
-        mt[0] = s & 0xffffffffUL;
-        for (mti = 1; mti < N; mti++)
-        {
-            mt[mti] =
-                (1812433253UL * (mt[mti - 1] ^ (mt[mti - 1] >> 30)) + mti);
-
-            /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-            /* In the previous versions, MSBs of the seed affect   */
-            /* only MSBs of the array mt[].                        */
-            /* 2002/01/09 modified by Makoto Matsumoto             */
-            mt[mti] &= 0xffffffffUL;
-            /* for >32 bit machines */
-        }
+        rng = &process_rng;
     }
 
-    if (mti >= N)
+    uint32_t* mt = rng->mt;
+
+    if (!rng->mti)
+    {
+        prjm_eval_rng_seed(rng, 0x4141f00d); // Initial Mersenne Twister seed
+    }
+
+    if (rng->mti >= N)
     { /* generate N words at one time */
         int32_t kk;
 
@@ -198,10 +208,10 @@ static uint32_t prjm_eval_genrand_int32(void)
         y = (mt[N - 1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
         mt[N - 1] = mt[M - 1] ^ (y >> 1) ^ mag01[y & 0x1UL];
 
-        mti = 0;
+        rng->mti = 0;
     }
 
-    y = mt[mti++];
+    y = mt[rng->mti++];
 
     /* Tempering */
     y ^= (y >> 11);
@@ -1167,7 +1177,7 @@ prjm_eval_function_decl(rand)
         rand_max = 1.;
     }
 
-    assign_ret_val((PRJM_EVAL_F) (prjm_eval_genrand_int32() * (1.0 / (double) 0xFFFFFFFF) * rand_max));
+    assign_ret_val((PRJM_EVAL_F) (prjm_eval_genrand_int32(ctx->rng) * (1.0 / (double) 0xFFFFFFFF) * rand_max));
 }
 
 prjm_eval_function_decl(invsqrt)

@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -112,6 +114,16 @@ void projectm_eval_context_free_memory(struct projectm_eval_context* ctx);
  * @param ctx The context in which to reset the variables.
  */
 void projectm_eval_context_reset_variables(struct projectm_eval_context* ctx);
+
+/**
+ * @brief Seeds the context's rand() stream.
+ * Each context draws rand() from its own stream, so contexts used on different threads
+ * neither race nor shift each other's values. A context that is never seeded starts with
+ * Milkdrop's default seed (0x4141f00d).
+ * @param ctx The context whose stream to seed.
+ * @param seed The seed.
+ */
+void projectm_eval_context_seed_rand(struct projectm_eval_context* ctx, uint32_t seed);
 
 /**
  * @brief Registers a variable and returns the value pointer.
